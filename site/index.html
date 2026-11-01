@@ -35,6 +35,7 @@ h1,h2,h3,h4{font-family:var(--display);line-height:1.05;margin:0;text-wrap:balan
 .eyebrow{font:700 12px/1 var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--leaf)}
 .btn{display:inline-flex;align-items:center;gap:8px;font:700 16px/1 var(--body);text-decoration:none;padding:15px 22px;border-radius:999px;border:2px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer}
 .btn.sun{background:var(--sun);border-color:var(--sun);color:var(--sun-ink)}
+.btn.stripe{background:#635BFF;border-color:#635BFF;color:#fff}
 .btn:hover{transform:translateY(-1px)}
 @media (prefers-reduced-motion:no-preference){.btn{transition:transform .15s}}
 
@@ -268,6 +269,11 @@ const QUOTES=[
  ["Bibi","Community Yoga is where we recharge the body, mind and soul. It fills my heart with joy and I'm grateful to be part of it."]
 ];
 
+/* Stripe Payment Links. To go live: in the Stripe dashboard create a Payment Link
+   per ticket type (Products -> Payment links, price in GBP, "adjust quantity" on)
+   and paste the https://buy.stripe.com/... URLs here. While empty, checkout runs
+   as an on-page demo. */
+const STRIPE_LINKS={"Early Birds":"","General Admission":""};
 const EVENTS={
   winter:{title:"Mindfulness Day: Winter Edition",date:"Sat 5 Dec 2026",time:"10:00 – 13:00",venue:"Number 90 Bar Hackney Wick, 90 Wallis Rd, London E9 5LN",img:"winter",demo:true,
     tickets:[["Early Birds",25],["General Admission",30]]},
@@ -387,7 +393,7 @@ events:()=>`
       <form class="cf" id="payForm">
         <label for="payName">Name<input id="payName" required autocomplete="name"></label>
         <label for="payEmail">Email<input id="payEmail" type="email" required autocomplete="email"></label>
-        <button class="btn sun" type="submit" style="justify-content:center">Pay now (demo)</button>
+        <button class="btn stripe" type="submit" style="justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Pay securely with Stripe</button>
         <button class="btn" type="button" id="backTix" style="justify-content:center">← Back to tickets</button>
       </form>
       <p class="demo-note">Demo preview: nothing is charged and no card is asked for. On the live site this step hands over to the payment provider (e.g. Stripe), and the ticket with a QR code goes out by email.</p>
@@ -504,7 +510,11 @@ document.addEventListener("submit",e=>{
   e.preventDefault();
   if(e.target.id==="newsForm"){document.getElementById("newsOk").hidden=false;e.target.reset();}
   if(e.target.id==="contactForm"){document.getElementById("cfOk").hidden=false;e.target.reset();}
-  if(e.target.id==="payForm"){document.getElementById("tixStep2").hidden=true;document.getElementById("tixStep3").hidden=false;}
+  if(e.target.id==="payForm"){
+    const chosen=[...document.querySelectorAll("[id^='qty-']")].map((q,i)=>({n:EVENTS.winter.tickets[i][0],qty:+q.textContent})).filter(t=>t.qty>0);
+    const link=chosen.map(t=>STRIPE_LINKS[t.n]).find(u=>u);
+    if(link){location.href=link;return;}
+    document.getElementById("tixStep2").hidden=true;document.getElementById("tixStep3").hidden=false;}
 });
 addEventListener("hashchange",render);
 render();
